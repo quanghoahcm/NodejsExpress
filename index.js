@@ -4,14 +4,14 @@ var bodyParser = require('body-parser')
 var app = express();
 
 var sql = require("mssql");
-
+const jwt = require("jsonwebtoken")
 // config for your database
 var connectString = require('./models/config')
 // connect to your database
 var results = [];
 
-import { getAllProject, updateProject, addProject, deleteProject, searchProject } from "./services/project"
-
+import { getAllProject, updateProject, addProject, deleteProject, searchProject, getProjectById } from "./services/project"
+import { login, registerUser } from "./services/user";
 // Add headers
 app.use(function (req, res, next) {
 
@@ -58,7 +58,7 @@ app.get('/', function (req, res) {
 
 app.use(bodyParser.json({ type: 'application/json' }));
 var projectRouter = express.Router();
-
+var userRouter = express.Router();
 
 projectRouter.get('', function (req, res) {
     // create Request object
@@ -80,17 +80,20 @@ projectRouter.get('', function (req, res) {
 
 projectRouter.get('/:id', function (req, res) {
 
-    const request = new sql.Request();
-    request.input('id', sql.Int, req.params.id).query('select * from Project  where id = @id').then(results => {
-        // console.log(results)
-        if (results.recordset.length > 0)
-            res.project = results.recordset[0];
-        res.json(res.project);
-    },
-        err => {
-            res.send({ error: "Can't query" });
+    // const request = new sql.Request();
+    // request.input('id', sql.Int, req.params.id).query('select * from Project  where id = @id').then(results => {
+    //     // console.log(results)
+    //     if (results.recordset.length > 0)
+    //         res.project = results.recordset[0];
+    //     res.json(res.project);
+    // },
+    //     err => {
+    //         res.send({ error: "Can't query" });
+    //     })
+    if(req.params.id)
+        getProjectById(sql,req.params.id).then(results=>{
+            res.json(results)
         })
-
 });
 // Update Project with parameter name, imageUrl
 projectRouter.post('/:id', function (req, res) {
@@ -99,6 +102,8 @@ projectRouter.post('/:id', function (req, res) {
             res.json(results);
         })
 });
+
+
 // Insert Project into database
 projectRouter.put('/add', function (req, res) {
     console.log('----project add start  --------')
@@ -131,8 +136,36 @@ projectRouter.get('/search/:term', function (req, res) {
         });
 })
 
-// Attach the routers for their respective paths
+
+
+// Attach the routers for their respective paths /projects
 app.use('/projects', projectRouter);
+
+
+
+userRouter.post('/login',function(req,res){
+    if(req.body){
+        login(sql,req.body).then(results=>{
+            res.json(results)
+            console.log(results);
+        })
+    }
+})
+userRouter.post('/register',function(req,res){
+    if(req.body){
+        console.log('Do you want insert:'+ req.body);
+        registerUser(sql,req.body).then(results=>{
+            let payload ={ subject : "1" }
+            let token = jwt.sign(payload,"quanghoahcm");
+            res.json({token})
+            console.log(results);         
+        })
+    }
+    // console.log(req.body)
+    // return res.json("Please enter body (username and password");
+})
+//  routers /users
+app.use('/users', userRouter);
 
 // Start listening for HTTP requests
 const startApp = () => {

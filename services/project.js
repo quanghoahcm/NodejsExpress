@@ -22,7 +22,26 @@ const getAllProject = async (sql) => {
         return recordset
     }); 
 }
-
+const getProjectById =(sql,id) =>{
+    return new Promise((res,rej)=>{
+        var request = new sql.Request();
+        request
+            .input('id',sql.Int,id)
+            .query('SELECT * FROM Project WHERE id =@id ')
+            .then(recordset=>{
+                res.project = recordset.recordset[0];
+                if(recordset)
+                res( 
+                    res.project,
+                    {msg: "Select project: "+ recordset.rowsAffected })
+            },
+        err=>{
+            console.log(err);
+            rej(err)
+        }
+        )
+    });
+}
 const updateProject = (sql, id, project) => {
     return new Promise((res, rej) => {
         var request = new sql.Request();
@@ -88,4 +107,4 @@ const searchProject =(sql,term)=>{
     })
 }
 
-module.exports = { getAllProject, updateProject, addProject, deleteProject, searchProject }
+module.exports = { getAllProject, updateProject, addProject, deleteProject, searchProject, getProjectById }
