@@ -12,6 +12,7 @@ var results = [];
 
 import { getAllProject, updateProject, addProject, deleteProject, searchProject, getProjectById } from "./services/project"
 import { login, registerUser } from "./services/user";
+import { getAllPermissions } from "./services/permission";
 // Add headers
 app.use(function (req, res, next) {
 
@@ -59,7 +60,7 @@ app.get('/', function (req, res) {
 app.use(bodyParser.json({ type: 'application/json' }));
 var projectRouter = express.Router();
 var userRouter = express.Router();
-
+var permissionsUser = express.Router();
 projectRouter.get('', function (req, res) {
     // create Request object
     var request = new sql.Request();
@@ -166,6 +167,20 @@ userRouter.post('/register',function(req,res){
 })
 //  routers /users
 app.use('/users', userRouter);
+
+
+
+
+permissionsUser.get('/getAll',function(req,res){
+    console.log('---Start get all permissions -------');
+    getAllPermissions().then(results=>{
+    res.json(results) ;
+    })
+})
+// router // Permisions
+app.use('/permissions',permissionsUser);
+
+
 
 // Start listening for HTTP requests
 const startApp = () => {
